@@ -1,121 +1,123 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 const body = document.body;
-let screen = 400;
-class Tail {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-}
-const snakeBody = [];
-let gOver = false;
-let box = 20;
-let snake = {
-    x: Math.floor(Math.random() * box),
-    y: Math.floor(Math.random() * box),
-    length: 0,
+const game = {
+    box: 20,
+    size: 400,
+    gOver: false,
+    clear: () => ctx.clearRect(0, 0, game.size, game.size),
+    collisions: () => {
+        if (snake.tails[0].x === apple.x && snake.tails[0].y === apple.y) {
+            (apple.x = Math.floor(Math.random() * game.box)),
+                (apple.y = Math.floor(Math.random() * game.box));
+            snake.tailCount++;
+        }
+        for (let j = 3; j < snake.tails.length; j++)
+            if (
+                snake.tailCount > 0 &&
+                snake.tails[0].x === snake.tails[j].x &&
+                snake.tails[0].y === snake.tails[j].y
+            )
+                game.gOver = true;
+    },
 };
-let apple = {
-    x: Math.floor(Math.random() * box),
-    y: Math.floor(Math.random() * box),
-};
-let velocity = { x: 0, y: 0 };
-let score = 0;
+const snake = {
+    tails: [],
+    tailCount: 0,
+    speedX: 0,
+    speedY: 0,
+    draw: () => {
+        if (
+            parseInt(snake.tails[0].x) < 0 ||
+            parseInt(snake.tails[0].x) === game.box ||
+            parseInt(snake.tails[0].y) < 0 ||
+            parseInt(snake.tails[0].y) === game.box
+        )
+            return (game.gOver = true);
+        parseInt((snake.tails[0].x += snake.speedX));
+        parseInt((snake.tails[0].y += snake.speedY));
 
-const changeSnakePos = () => {
-    snake.x = snake.x + velocity.x;
-    snake.y = snake.y + velocity.y;
+        ctx.fillStyle = "lime";
+        for (let i = 0; i < snake.tails.length; i++)
+            ctx.fillRect(
+                snake.tails[i].x * game.box,
+                snake.tails[i].y * game.box,
+                game.box,
+                game.box
+            );
+        snake.tails.unshift({ x: snake.tails[0].x, y: snake.tails[0].y });
+        if (snake.tails.length - 1 > snake.tailCount) return snake.tails.pop();
+    },
 };
-
-const checkGame = () => {
-    gOver = false;
-    if (velocity.x === 0 && velocity.y === 0) return false;
-    else if (snake.x < 0) gOver = true;
-    else if (snake.x === box) gOver = true;
-    else if (snake.y < 0) gOver = true;
-    else if (snake.y === box) gOver = true;
-    for (let i = 0; i < snakeBody.length; i++)
-        if (snakeBody[i].x === snake.x && snakeBody[i].y === snake.y)
-            gOver = true;
-    if (gOver) {
-        alert("Game Over!");
-        if (true) window.location.reload();
-    }
-};
-
-const clear = () => {
-    ctx.clearRect(0, 0, screen, screen);
-};
-
-const checkCollisions = () => {
-    if (snake.x === apple.x && snake.y === apple.y) {
-        apple.x = Math.floor(Math.random() * box);
-        apple.y = Math.floor(Math.random() * box);
-        snake.length++;
-        score++;
-    }
-};
-
-const drawScore = () => {
-    ctx.fillStyle = "white";
-    ctx.font = "18px sans-serif";
-    ctx.fillText("Score: " + score, 10, 20, 80);
-};
-
-const drawApple = () => {
-    ctx.fillStyle = "red";
-    ctx.fillRect(apple.x * box, apple.y * box, box, box);
+const apple = {
+    x: Math.floor(Math.random() * game.box),
+    y: Math.floor(Math.random() * game.box),
+    draw: () => {
+        ctx.fillStyle = "red";
+        ctx.fillRect(
+            apple.x * game.box,
+            apple.y * game.box,
+            game.box,
+            game.box
+        );
+    },
 };
 
-const drawSnake = () => {
-    ctx.fillStyle = "yellow";
-    ctx.fillRect(snake.x * box, snake.y * box, box, box);
-    for (let i = 0; i < snakeBody.length; i++)
-        ctx.fillRect(snakeBody[i].x * box, snakeBody[i].y * box, box, box);
-    snakeBody.push(new Tail(snake.x, snake.y));
-    if (snakeBody.length > snake.length) return snakeBody.shift();
-    ctx.fillRect(snake.x * box, snake.y * box, box, box);
+const score = {
+    color: "white",
+    font: "18px sans-serif",
+    draw: () => {
+        ctx.fillStyle = score.color;
+        ctx.font = score.font;
+        ctx.fillText("Score: " + snake.tailCount, 10, 20, 80);
+    },
 };
 
-const gameLoop = () => {
-    changeSnakePos();
-    checkGame();
-    if (gOver) return;
-    clear();
-    checkCollisions();
-    drawScore();
-    drawApple();
-    drawSnake();
-    setTimeout(gameLoop, 100);
+snake.tails[0] = {
+    x: Math.floor(Math.random() * game.box),
+    y: Math.floor(Math.random() * game.box),
 };
 
 body.addEventListener("keydown", (e) => {
-    if (e.keyCode == 37 && velocity.x !== 1) {
-        velocity.x = -1;
-        velocity.y = 0;
-    } else if (e.key == "a" && velocity.x !== 1) {
-        velocity.x = -1;
-        velocity.y = 0;
-    } else if (e.keyCode == 38 && velocity.y !== 1) {
-        velocity.y = -1;
-        velocity.x = 0;
-    } else if (e.key == "w" && velocity.y !== 1) {
-        velocity.y = -1;
-        velocity.x = 0;
-    } else if (e.keyCode == 39 && velocity.x !== -1) {
-        velocity.y = 0;
-        velocity.x = 1;
-    } else if (e.key == "d" && velocity.x !== -1) {
-        velocity.y = 0;
-        velocity.x = 1;
-    } else if (e.keyCode == 40 && velocity.y !== -1) {
-        velocity.y = 1;
-        velocity.x = 0;
-    } else if (e.key == "s" && velocity.y !== -1) {
-        velocity.y = 1;
-        velocity.x = 0;
+    if (e.keyCode == 37 && snake.speedX !== 1) {
+        snake.speedY = 0;
+        snake.speedX = -1;
+    } else if (e.key == "a" && snake.speedX !== 1) {
+        snake.speedY = 0;
+        snake.speedX = -1;
+    } else if (e.keyCode == 38 && snake.speedY !== 1) {
+        snake.speedX = 0;
+        snake.speedY = -1;
+    } else if (e.key == "w" && snake.speedY !== 1) {
+        snake.speedX = 0;
+        snake.speedY = -1;
+    } else if (e.keyCode == 39 && snake.speedX !== -1) {
+        snake.speedY = 0;
+        snake.speedX = 1;
+    } else if (e.key == "d" && snake.speedX !== -1) {
+        snake.speedX = 1;
+        snake.speedY = 0;
+    } else if (e.keyCode == 40 && snake.speedY !== -1) {
+        snake.speedY = 1;
+        snake.speedX = 0;
+    } else if (e.key == "s" && snake.speedY !== -1) {
+        snake.speedX = 0;
+        snake.speedY = 1;
     }
 });
 
-gameLoop();
+const gLoop = () => {
+    if (!game.gOver) {
+        game.clear();
+        game.collisions();
+        apple.draw();
+        snake.draw();
+        score.draw();
+    } else {
+        alert("Game Over!");
+        if (true) window.location.reload();
+    }
+    setTimeout(gLoop, 120);
+};
+
+gLoop();
