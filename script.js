@@ -1,123 +1,161 @@
-const canvas = document.querySelector("canvas");
-const ctx = canvas.getContext("2d");
-const body = document.body;
 const game = {
     box: 20,
-    size: 400,
-    gOver: false,
-    clear: () => ctx.clearRect(0, 0, game.size, game.size),
-    collisions: () => {
-        if (snake.tails[0].x === apple.x && snake.tails[0].y === apple.y) {
-            (apple.x = Math.floor(Math.random() * game.box)),
-                (apple.y = Math.floor(Math.random() * game.box));
-            snake.tailCount++;
-        }
-        for (let j = 3; j < snake.tails.length; j++)
-            if (
-                snake.tailCount > 0 &&
-                snake.tails[0].x === snake.tails[j].x &&
-                snake.tails[0].y === snake.tails[j].y
-            )
-                game.gOver = true;
-    },
+    minColumn: 1,
+    minRow: 1,
+    maxColumn: 20,
+    maxRow: 20,
+    running: false,
+    fps: 8,
 };
 const snake = {
-    tails: [],
-    tailCount: 0,
-    speedX: 0,
-    speedY: 0,
-    draw: () => {
-        if (
-            parseInt(snake.tails[0].x) < 0 ||
-            parseInt(snake.tails[0].x) === game.box ||
-            parseInt(snake.tails[0].y) < 0 ||
-            parseInt(snake.tails[0].y) === game.box
-        )
-            return (game.gOver = true);
-        parseInt((snake.tails[0].x += snake.speedX));
-        parseInt((snake.tails[0].y += snake.speedY));
+    x: Math.floor(Math.random() * game.maxColumn) + game.minColumn,
+    y: Math.floor(Math.random() * game.maxRow) + game.minRow,
+    dx: 0,
+    dy: 0,
+    direction: null,
+};
+const food = { x: 11, y: 11 };
+const main = document.querySelector("main");
+const body = document.body;
 
-        ctx.fillStyle = "lime";
-        for (let i = 0; i < snake.tails.length; i++)
-            ctx.fillRect(
-                snake.tails[i].x * game.box,
-                snake.tails[i].y * game.box,
-                game.box,
-                game.box
+const drawSnake = () => {
+    const snakeDiv = document.createElement("div");
+    snakeDiv.style.gridColumnStart = snake.x;
+    snakeDiv.style.gridRowStart = snake.y;
+    snakeDiv.className = "snake";
+    main.append(snakeDiv);
+    const snakeBody = document.querySelectorAll(".snake");
+    const snakeHead = snakeBody[0];
+    snakeBody.length > 1 ? snakeHead.remove() : null;
+};
+
+const moveSnake = () => {
+    snake.x += snake.dx;
+    snake.y += snake.dy;
+};
+
+const collisions = () => {
+    if (snake.x > game.maxColumn) return (snake.x = game.minColumn);
+    if (snake.y > game.maxRow) return (snake.y = game.minRow);
+    if (snake.x < game.minColumn) return (snake.x = game.maxColumn);
+    if (snake.y < game.minRow) return (snake.y = game.maxRow);
+    const tails = Array.from(document.querySelectorAll(".snake"));
+    const headX = tails[0].style.gridColumnStart;
+    const headY = tails[0].style.gridRowStart;
+    if (
+        tails.some((tail, index) => {
+            if (index <= 1) return false;
+            return (
+                headX == tail.style.gridColumnStart &&
+                headY == tail.style.gridRowStart
             );
-        snake.tails.unshift({ x: snake.tails[0].x, y: snake.tails[0].y });
-        if (snake.tails.length - 1 > snake.tailCount) return snake.tails.pop();
-    },
-};
-const apple = {
-    x: Math.floor(Math.random() * game.box),
-    y: Math.floor(Math.random() * game.box),
-    draw: () => {
-        ctx.fillStyle = "red";
-        ctx.fillRect(
-            apple.x * game.box,
-            apple.y * game.box,
-            game.box,
-            game.box
-        );
-    },
-};
-
-const score = {
-    color: "white",
-    font: "18px sans-serif",
-    draw: () => {
-        ctx.fillStyle = score.color;
-        ctx.font = score.font;
-        ctx.fillText("Score: " + snake.tailCount, 10, 20, 80);
-    },
+        })
+    ) {
+        game.over = true;
+        setTimeout(() => location.reload(), 300);
+    }
+    if (
+        tails.some(
+            (tail) =>
+                tail.style.gridColumnStart == food.x &&
+                tail.style.gridRowStart == food.y
+        )
+    ) {
+        const tail = document.createElement("div");
+        tail.style.gridColumnStart = snake.x;
+        tail.style.gridRowStart = snake.y;
+        tail.className = "snake";
+        main.append(tail);
+        const foodDiv = document.querySelector(".food");
+        foodDiv ? foodDiv.remove() : null;
+        food.x = Math.floor(Math.random() * game.maxColumn) + game.minColumn;
+        food.y = Math.floor(Math.random() * game.maxRow) + game.minRow;
+        spawnFood();
+    }
 };
 
-snake.tails[0] = {
-    x: Math.floor(Math.random() * game.box),
-    y: Math.floor(Math.random() * game.box),
+const spawnFood = () => {
+    const tails = Array.from(document.querySelectorAll(".snake"));
+    if (
+        tails.some(
+            (tail) =>
+                tail.style.gridColumnStart == food.x &&
+                tail.style.gridRowStart == food.y
+        )
+    ) {
+        food.x = Math.floor(Math.random() * game.maxColumn) + game.minColumn;
+        food.y = Math.floor(Math.random() * game.maxRow) + game.minRow;
+    }
+    const foodElement = document.createElement("div");
+    foodElement.style.gridColumnStart = food.x;
+    foodElement.style.gridRowStart = food.y;
+    foodElement.className = "food";
+    main.append(foodElement);
 };
 
-body.addEventListener("keydown", (e) => {
-    if (e.keyCode == 37 && snake.speedX !== 1) {
-        snake.speedY = 0;
-        snake.speedX = -1;
-    } else if (e.key == "a" && snake.speedX !== 1) {
-        snake.speedY = 0;
-        snake.speedX = -1;
-    } else if (e.keyCode == 38 && snake.speedY !== 1) {
-        snake.speedX = 0;
-        snake.speedY = -1;
-    } else if (e.key == "w" && snake.speedY !== 1) {
-        snake.speedX = 0;
-        snake.speedY = -1;
-    } else if (e.keyCode == 39 && snake.speedX !== -1) {
-        snake.speedY = 0;
-        snake.speedX = 1;
-    } else if (e.key == "d" && snake.speedX !== -1) {
-        snake.speedX = 1;
-        snake.speedY = 0;
-    } else if (e.keyCode == 40 && snake.speedY !== -1) {
-        snake.speedY = 1;
-        snake.speedX = 0;
-    } else if (e.key == "s" && snake.speedY !== -1) {
-        snake.speedX = 0;
-        snake.speedY = 1;
+const checkGame = () => {
+    if (game.over) {
+        const badMessageContainer = document.createElement("div");
+        const message = document.createElement("h1");
+        badMessageContainer.className = "bad-message-container";
+        message.innerText = "You Lose";
+        message.className = "bad-message";
+        badMessageContainer.append(message);
+        body.append(badMessageContainer);
+    }
+};
+
+spawnFood();
+drawSnake();
+
+setInterval(() => {
+    if (game.running && !game.over) {
+        drawSnake();
+        moveSnake();
+        collisions();
+        checkGame();
+    }
+}, 1000 / game.fps);
+
+window.addEventListener("keydown", (e) => {
+    if (
+        (e.key.toLowerCase() == "a" || e.key == "ArrowLeft") &&
+        snake.direction != "right" &&
+        snake.dx >= 0
+    ) {
+        snake.dy = 0;
+        snake.direction = "left";
+        snake.dx--;
+        !game.running ? (game.running = true) : null;
+    }
+    if (
+        (e.key.toLowerCase() == "w" || e.key == "ArrowUp") &&
+        snake.direction != "down" &&
+        snake.dy >= 0
+    ) {
+        snake.dx = 0;
+        snake.direction = "up";
+        snake.dy--;
+        !game.running ? (game.running = true) : null;
+    }
+    if (
+        (e.key.toLowerCase() == "d" || e.key == "ArrowRight") &&
+        snake.direction != "left" &&
+        snake.dx <= 0
+    ) {
+        snake.dy = 0;
+        snake.direction = "right";
+        snake.dx++;
+        !game.running ? (game.running = true) : null;
+    }
+    if (
+        (e.key.toLowerCase() == "s" || e.key == "ArrowDown") &&
+        snake.direction != "up" &&
+        snake.dy <= 0
+    ) {
+        snake.dx = 0;
+        snake.direction = "down";
+        snake.dy++;
+        !game.running ? (game.running = true) : null;
     }
 });
-
-const gLoop = () => {
-    if (!game.gOver) {
-        game.clear();
-        game.collisions();
-        apple.draw();
-        snake.draw();
-        score.draw();
-    } else {
-        alert("Game Over!");
-        if (true) window.location.reload();
-    }
-    setTimeout(gLoop, 120);
-};
-
-gLoop();

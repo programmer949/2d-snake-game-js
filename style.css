@@ -6,15 +6,87 @@
 
 html,
 body {
-    height: 100%;
     width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #4b8904;
+}
+
+main {
+    width: 95vmin;
+    height: 95vmin;
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    grid-template-rows: repeat(20, 1fr);
+    background-color: #5eaf00;
+    border: 1px solid black;
+}
+
+@keyframes changeColor {
+    0% {
+        background-color: #ffae00;
+    }
+    10% {
+        background-color: #ffd900;
+    }
+    20% {
+        background-color: #e5ff00;
+    }
+    30% {
+        background-color: #a6ff00;
+    }
+    40% {
+        background-color: #00ff9d;
+    }
+    50% {
+        background-color: #0084ff;
+    }
+    60% {
+        background-color: #3700ff;
+    }
+    70% {
+        background-color: #c300ff;
+    }
+    80% {
+        background-color: #ff00f2;
+    }
+    90% {
+        background-color: #ff0077;
+    }
+    100% {
+        background-color: #ff0000;
+    }
+}
+
+.snake {
+    animation: 0.5s changeColor linear infinite;
+    border: 0.10vmin solid black;
+}
+
+.food {
+    width: 90%;
+    height: 90%;
+    margin: auto;
+    background-color: yellow;
+    border: 0.15vmin solid black;
+    border-radius: 50%;
+}
+
+.bad-message-container {
+    width: 95vmin;
+    height: 95vmin;
+    background-color: #000000af;
+    position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #03a9f4;
-    overflow: hidden;
 }
 
-canvas {
-    background-color: black;
+.bad-message {
+	color: white;
+	font-family: cursive;
+	font-weight: 100;
+	font-size: 5vw;
 }
